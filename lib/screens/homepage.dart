@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:untitled/service/device_service.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -7,11 +8,47 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  final DeviceService deviceService = DeviceService(serverIp: 'https://node-jserverdht11.onrender.com');
+  Map<String, dynamic> deviceStatus = {};
+  String? temperature;
+  String? humidity;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  void _loadData() async {
+    await fetchDeviceStatus();
+    await fetchSensorData();
+  }
+
+  Future<void> fetchDeviceStatus() async {
+    final status = await deviceService.fetchDeviceStatus();
+    setState(() {
+      deviceStatus = status;
+    });
+  }
+
+  Future<void> fetchSensorData() async {
+    final data = await deviceService.fetchSensorData();
+    setState(() {
+      temperature = data['temperature'] ?? 'Loading...';
+      humidity = data['humidity'] ?? 'Loading...';
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadData();
   }
 
   @override
@@ -27,58 +64,80 @@ class _HomePageState extends State<HomePage> {
             child: GridView.count(
               crossAxisCount: 2,
               padding: EdgeInsets.all(16.0),
-              childAspectRatio: 1.0, // Adjust this to control card aspect ratio
+              childAspectRatio: 1.0,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0), // Spacing around each card
+                  padding: const EdgeInsets.all(3.0),
                   child: DeviceCard(
                     icon: Icons.lightbulb,
+                    isicon : true,
                     title: 'Lamp',
                     subtitle: 'Kitchen',
-                    value: '',
+                    value: 'Lamp',
                     isSwitch: true,
-                    switchValue: true,
+                    switchValue: deviceStatus['DEVICE1'] == 'ON',
+                    bgColor: Colors.deepPurpleAccent,
                     onSwitchChanged: (bool value) {
-                      // Handle switch change
+                      setDeviceStatus('DEVICE1', value ? 'ON' : 'OFF');
                     },
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(3.0),
+                  child: DeviceCard(
+                    icon: Icons.lightbulb,
+                    isicon : true,
+                    title: 'Lamp 2',
+                    subtitle: 'Living Room',
+                    value: 'Lamp 2',
+                    isSwitch: true,
+                    switchValue: deviceStatus['DEVICE2'] == 'ON',
+                    onSwitchChanged: (bool value) {
+                      setDeviceStatus('DEVICE2', value ? 'ON' : 'OFF');
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(3.0),
                   child: DeviceCard(
                     icon: Icons.thermostat,
+                    isicon : true,
                     title: 'Temperature',
                     subtitle: 'Livingroom',
-                    value: '30°C',
+                    value: (temperature != null && temperature!.isNotEmpty) ? temperature! + '℃' : 'N/A',
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(3.0),
                   child: DeviceCard(
                     icon: Icons.water_drop,
+                    isicon : true,
                     title: 'Humidity',
                     subtitle: 'Livingroom',
-                    value: '70%',
+                    value: (humidity != null && humidity!.isNotEmpty) ? humidity! + '%' : 'N/A',
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(3.0),
                   child: DeviceCard(
                     icon: Icons.speaker,
+                    isicon : true,
                     title: 'Speaker',
                     subtitle: 'Work office',
-                    value: "",
+                    value: 'Speaker',
                     isSwitch: true,
-                    switchValue: false,
+                    switchValue: deviceStatus['DEVICE3'] == 'ON',
                     onSwitchChanged: (bool value) {
-                      // Handle switch change
+                      setDeviceStatus('DEVICE3', value ? 'ON' : 'OFF');
                     },
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(3.0),
                   child: DeviceCard(
+
                     icon: Icons.add,
+                    isicon : false,
                     title: '',
                     subtitle: '',
                     value: '',
@@ -94,9 +153,16 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  Future<void> setDeviceStatus(String device, String status) async {
+    await deviceService.setDeviceStatus(device, status);
+    setState(() {
+      deviceStatus[device] = status;
+    });
+  }
 }
 
-class DeviceCard extends StatelessWidget {
+class DeviceCard extends StatefulWidget {
   final IconData icon;
   final String title;
   final String subtitle;
@@ -105,6 +171,8 @@ class DeviceCard extends StatelessWidget {
   final bool switchValue;
   final VoidCallback? onAddDevice;
   final ValueChanged<bool>? onSwitchChanged;
+  final bool isicon;
+  final Color bgColor;
 
   const DeviceCard({
     required this.icon,
@@ -115,42 +183,92 @@ class DeviceCard extends StatelessWidget {
     this.switchValue = false,
     this.onAddDevice,
     this.onSwitchChanged,
+    this.isicon = false,
+    this.bgColor = Colors.lightBlueAccent,
     Key? key,
   }) : super(key: key);
 
   @override
+  _DeviceCardState createState() => _DeviceCardState();
+}
+
+class _DeviceCardState extends State<DeviceCard> {
+  bool _switchValue = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _switchValue = widget.switchValue;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: Colors.lightBlueAccent.shade100,
+        color: widget.bgColor,
         borderRadius: BorderRadius.circular(12.0),
       ),
-      child: Column(
+      child: widget.isicon || widget.title.isNotEmpty || widget.subtitle.isNotEmpty || widget.isSwitch
+          ? Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start, // Align contents to the left
         children: [
-          Icon(icon, size: 36.0),
-          SizedBox(height: 8.0),
-          Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0)),
-          if (value.isNotEmpty)
-            Text(value, style: TextStyle(fontSize: 24.0)),
-          if (subtitle.isNotEmpty)
-            Text(subtitle, style: TextStyle(color: Colors.grey)),
-          if (isSwitch)
-            Switch(
-              value: switchValue,
-              onChanged: onSwitchChanged,
+          if (widget.isicon)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start, // Aligns icon and switch to the top
+              children: [
+                Icon(widget.icon, size: 35.0),
+                Spacer(), // Adds spacing between icon and switch
+                if (widget.isSwitch)
+                  Switch(
+                    value: _switchValue,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _switchValue = value;
+                      });
+                      if (widget.onSwitchChanged != null) {
+                        widget.onSwitchChanged!(value);
+                      }
+                    },
+                  )
+                else
+                  Text(
+                    widget.title,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
+                  ),
+              ],
             ),
-          if (onAddDevice != null)
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: onAddDevice,
+          SizedBox(height: 15.0),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              widget.value,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25.0),
             ),
+          ),
+          if (widget.subtitle.isNotEmpty) ...[
+            SizedBox(height: 15.0),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                widget.subtitle,
+                style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+          ],
         ],
+      )
+          : Center(
+        child: IconButton(
+          icon: Icon(Icons.add, size: 50.0),
+          onPressed: widget.onAddDevice,
+        ),
       ),
     );
   }
 }
+
 
 class Header extends StatelessWidget {
   final String greeting;
@@ -162,11 +280,10 @@ class Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(16),
-      color: Colors.grey[200], // Background color for the header
+      color: Colors.grey[200],
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Greeting and name
           Row(
             children: [
               Icon(Icons.sentiment_satisfied, size: 30),
@@ -192,7 +309,6 @@ class Header extends StatelessWidget {
               ),
             ],
           ),
-          // Settings icon
           Row(
             children: [
               IconButton(

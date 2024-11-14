@@ -57,7 +57,7 @@ class _MainScreenState extends State<MainScreen> {
   static List<Widget> _screens = <Widget>[
     HomePage(),
     DeviceScreen(),
-    HistoriScreen(),
+    HistoryScreen(),
     ProfileScreen(),
   ];
 
