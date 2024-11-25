@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:untitled/service/device_service.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -26,18 +28,23 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> fetchDeviceStatus() async {
     final status = await deviceService.fetchDeviceStatus();
-    setState(() {
-      deviceStatus = status;
-    });
+    if (mounted) {
+      setState(() {
+        deviceStatus = status;
+      });
+    }
   }
 
   Future<void> fetchSensorData() async {
     final data = await deviceService.fetchSensorData();
-    setState(() {
-      temperature = data['temperature'] ?? 'Loading...';
-      humidity = data['humidity'] ?? 'Loading...';
-    });
+    if (mounted) {
+      setState(() {
+        temperature = data['temperature'] ?? 'Loading...';
+        humidity = data['humidity'] ?? 'Loading...';
+      });
+    }
   }
+
 
   void _onItemTapped(int index) {
     setState(() {
@@ -104,7 +111,7 @@ class _HomePageState extends State<HomePage> {
                     isicon : true,
                     title: 'Temperature',
                     subtitle: 'Livingroom',
-                    value: (temperature != null && temperature!.isNotEmpty) ? temperature! + '℃' : 'N/A',
+                    value: (temperature != null && temperature!.isNotEmpty) ? temperature! + '℃' : 'Loading...',
                   ),
                 ),
                 Padding(
@@ -114,7 +121,7 @@ class _HomePageState extends State<HomePage> {
                     isicon : true,
                     title: 'Humidity',
                     subtitle: 'Livingroom',
-                    value: (humidity != null && humidity!.isNotEmpty) ? humidity! + '%' : 'N/A',
+                    value: (humidity != null && humidity!.isNotEmpty) ? humidity! + '%' : 'Loading...',
                   ),
                 ),
                 Padding(
@@ -262,8 +269,8 @@ class _DeviceCardState extends State<DeviceCard> {
           : Center(
         child: IconButton(
           icon: Icon(Icons.add, size: 50.0),
-          onPressed: widget.onAddDevice,
-        ),
+          onPressed: () => _addDevice(context),
+        )
       ),
     );
   }
@@ -329,4 +336,34 @@ class Header extends StatelessWidget {
       ),
     );
   }
+}
+void _addDevice(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Add New Device"),
+        content: TextField(
+          decoration: InputDecoration(hintText: "Enter device name"),
+          onSubmitted: (value) {
+            // Logic để thêm thiết bị vào danh sách hoặc gửi thông tin đến server
+            Navigator.of(context).pop();  // Đóng hộp thoại
+          },
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: Text("Cancel"),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          TextButton(
+            child: Text("Add"),
+            onPressed: () {
+              // Thêm thiết bị vào danh sách
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
 }

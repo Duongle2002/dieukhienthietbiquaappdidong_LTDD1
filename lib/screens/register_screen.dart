@@ -22,39 +22,121 @@ class _RegisterScreenState extends State<RegisterScreen> {
     bool success = await Provider.of<AuthProvider>(context, listen: false).register(user);
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registration successful')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registration successful')),
+      );
+      Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registration failed')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registration failed')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Register')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _usernameController,
-              decoration: InputDecoration(labelText: 'Username'),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.orangeAccent, Colors.cyanAccent],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.person_add,
+                  size: 100,
+                  color: Colors.black,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'REGISTER',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  hintText: 'Username',
+                  controller: _usernameController,
+                ),
+                CustomTextField(
+                  hintText: 'Email',
+                  controller: _emailController,
+                ),
+                CustomTextField(
+                  hintText: 'Password',
+                  obscureText: true,
+                  controller: _passwordController,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.orangeAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+                  ),
+                  onPressed: _register,
+                  child: const Text('Register'),
+                ),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Already have an account? Login here.',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: 'Password'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _register,
-              child: Text('Register'),
-            ),
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CustomTextField extends StatelessWidget {
+  final String hintText;
+  final bool obscureText;
+  final TextEditingController? controller;
+
+  const CustomTextField({
+    Key? key,
+    required this.hintText,
+    this.obscureText = false,
+    this.controller,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        decoration: InputDecoration(
+          hintText: hintText,
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
     );

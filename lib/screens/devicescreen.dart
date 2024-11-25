@@ -59,7 +59,7 @@ class DeviceWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(8.0),
       margin: EdgeInsets.symmetric(vertical: 8.0),
       decoration: BoxDecoration(
         color: Colors.pink[50],
@@ -95,13 +95,19 @@ class DeviceWidget extends StatelessWidget {
                 style: TextStyle(fontSize: 16.0, color: Colors.black54),
               ),
               Spacer(),
-              _buildTimerOption("15'", context),
-              _buildTimerOption("30'", context),
-              _buildTimerOption("1h", context),
-              _buildTimerOption("2h", context),
-              TextButton(
-                onPressed: () {}, // Set time button action
-                child: Text("set time >", style: TextStyle(color: Colors.black54)),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildTimerOption("15'", context),
+                    _buildTimerOption("30'", context),
+                    _buildTimerOption("1h", context),
+                    TextButton(
+                      onPressed: () {}, // Set time button action
+                      child: Text("set time >", style: TextStyle(color: Colors.black54)),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -112,10 +118,14 @@ class DeviceWidget extends StatelessWidget {
 
   Widget _buildTimerOption(String label, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 1.0),
       child: Chip(
         label: Text(label),
         backgroundColor: Colors.grey[200],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20), // Rounded border
+          side: BorderSide(color: Colors.grey[400]!), // Optional: Border color
+        ),
       ),
     );
   }
