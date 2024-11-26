@@ -106,6 +106,7 @@ class DeviceWidget extends StatelessWidget {
                       onPressed: () {}, // Set time button action
                       child: Text("set time >", style: TextStyle(color: Colors.black54)),
                     ),
+
                   ],
                 ),
               ),

@@ -8,25 +8,36 @@ class AuthProvider with ChangeNotifier {
   final String _baseUrl = 'https://node-jserverdht11.onrender.com/auth';
   bool _isAuthenticated = false;
   String _token = '';
-  String _errorMessage = ''; // Thêm lỗi thông báo cho người dùng
+  String _errorMessage = ''; // Error message to inform the user
+  bool _isLoading = false; // Loading state flag
 
+  bool get isLoading => _isLoading;
   bool get isAuthenticated => _isAuthenticated;
   String get token => _token;
-  String get errorMessage => _errorMessage; // Getter cho errorMessage
+  String get errorMessage => _errorMessage; // Getter for errorMessage
 
-  // Kiểm tra nếu token đã được lưu trữ và xác thực người dùng
+  // Check if a token is saved and validate authentication
   Future<void> checkAuthenticationStatus() async {
+    _isLoading = true;
+    notifyListeners();
+
     final prefs = await SharedPreferences.getInstance();
     final savedToken = prefs.getString('token');
     if (savedToken != null && savedToken.isNotEmpty) {
       _token = savedToken;
       _isAuthenticated = true;
-      notifyListeners();
+      _isLoading = false; // Stop loading
+    } else {
+      _isLoading = false; // Stop loading
     }
+    notifyListeners();
   }
 
-  // Đăng ký người dùng
+  // Register a new user
   Future<bool> register(User user) async {
+    _isLoading = true; // Start loading
+    notifyListeners();
+
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/api/register'),
@@ -35,21 +46,28 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
+        _isLoading = false; // Stop loading
+        notifyListeners();
         return true;
       } else {
         _errorMessage = 'Registration failed: ${response.body}';
+        _isLoading = false; // Stop loading
         notifyListeners();
         return false;
       }
     } catch (e) {
       _errorMessage = 'Error during registration: $e';
+      _isLoading = false; // Stop loading
       notifyListeners();
       return false;
     }
   }
 
-  // Đăng nhập và lưu trữ token
+  // Login and store token
   Future<bool> login(String username, String password) async {
+    _isLoading = true; // Start loading
+    notifyListeners();
+
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/api/login'),
@@ -62,37 +80,44 @@ class AuthProvider with ChangeNotifier {
         String token = data['token'];
         print('Token: $token');
 
-        // Lưu token vào SharedPreferences
+        // Save token to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
 
         _token = token;
         _isAuthenticated = true;
+        _isLoading = false; // Stop loading
         notifyListeners();
         return true;
       } else {
         _errorMessage = 'Login failed: ${response.body}';
+        _isLoading = false; // Stop loading
         notifyListeners();
         return false;
       }
     } catch (e) {
       _errorMessage = 'Error during login: $e';
+      _isLoading = false; // Stop loading
       notifyListeners();
       return false;
     }
   }
 
-  // Đăng xuất và xóa token
+  // Logout and remove token
   Future<void> logout() async {
+    _isLoading = true; // Start loading
+    notifyListeners();
+
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token'); // Xóa token khỏi SharedPreferences
+    await prefs.remove('token'); // Remove token from SharedPreferences
 
     _token = '';
     _isAuthenticated = false;
+    _isLoading = false; // Stop loading
     notifyListeners();
   }
 
-  // Kiểm tra token có hết hạn hay không (nếu server hỗ trợ việc này)
+  // Check if the token is expired (if server supports this)
   Future<bool> isTokenExpired() async {
     try {
       final response = await http.get(
@@ -101,13 +126,13 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        return false; // Token hợp lệ
+        return false; // Token is valid
       } else {
-        return true; // Token không hợp lệ
+        return true; // Token is invalid
       }
     } catch (e) {
       print('Error validating token: $e');
-      return true; // Nếu có lỗi thì giả định token không hợp lệ
+      return true; // If there's an error, assume token is invalid
     }
   }
 }
